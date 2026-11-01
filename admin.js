@@ -64,10 +64,7 @@ loginForm.addEventListener("submit", async function (event) {
         return;
     }
 
-    loginMessage.style.color = "#52734d";
-    loginMessage.textContent = "Inicio de sesión correcto. ¡Bienvenida a VELORA!";
-
-    loginButton.textContent = "SESIÓN INICIADA";
+    window.location.href = "./dashboard.html";
 });
 
 // MOSTRAR FORMULARIO DE RECUPERACIÓN
