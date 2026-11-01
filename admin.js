@@ -106,7 +106,7 @@ recoveryForm.addEventListener("submit", async function (event) {
     const { error } = await supabase.auth.resetPasswordForEmail(
         recoveryEmail.value.trim(),
         {
-            redirectTo: window.location.origin + window.location.pathname
+            redirectTo: "https://perfumes-velora.netlify.app/admin.html"
         }
     );
 
