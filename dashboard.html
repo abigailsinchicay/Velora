@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+
+    <title>Panel de administración | VELORA</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="admin.css">
+</head>
+
+<body>
+
+    <div class="dashboard">
+
+        <aside class="sidebar">
+
+            <a href="index.html" class="brand">
+                <span class="brand-name">VELORA</span>
+                <span class="brand-subtitle">PERFUMERÍA</span>
+            </a>
+
+            <p class="sidebar-label">MENÚ PRINCIPAL</p>
+
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-link active">
+                    <span>▦</span>
+                    Resumen
+                </a>
+
+                <a href="#products" class="nav-link">
+                    <span>◇</span>
+                    Productos
+                </a>
+
+                <a href="#inventory" class="nav-link">
+                    <span>▤</span>
+                    Inventario
+                </a>
+
+                <a href="#account" class="nav-link">
+                    <span>⚙</span>
+                    Mi cuenta
+                </a>
+
+                </nav>
+
+            <div class="sidebar-bottom">
+
+                <a href="index.html" class="nav-link">
+                    <span>↗</span>
+                    Ver tienda
+                </a>
+
+                <button id="logoutButton" class="logout-button">
+                    <span>←</span>
+                    Cerrar sesión
+                </button>
+
+            </div>
+
+        </aside>
+
+        <main class="dashboard-main">
+
+            <header class="dashboard-header">
+
+                <div>
+                    <p class="eyebrow">ESPACIO PRIVADO</p>
+                    <h1>Panel de administración</h1>
+
+                    <p class="header-description">
+                        Gestioná los productos y el inventario de VELORA.
+                    </p>
+                </div>
+
+                <div class="admin-user">
+                    <div class="user-avatar">V</div>
+
+                    <div>
+                        <strong>VELORA</strong>
+                        <span>Administración</span>
+                    </div>
+                </div>
+
+            </header>
+
+            <section class="dashboard-content">
+
+                <div class="welcome-section">
+
+                    <div>
+                        <p class="eyebrow">BIENVENIDA</p>
+                        <h2>Tu tienda, tus reglas.</h2>
+
+                        <p>
+                            Desde aquí vas a poder administrar tu catálogo.
+                        </p>
+                    </div>
+
+                </div>
+
+                <!-- ESTADÍSTICAS -->
+
+                <section class="stats-grid">
+
+                    <article class="stat-card">
+                        <span class="stat-label">TOTAL DE PRODUCTOS</span>
+                        <strong id="totalProducts">—</strong>
+
+                        <span class="stat-description">
+                            Productos registrados
+                        </span>
+                    </article>
+
+                    <article class="stat-card">
+                        <span class="stat-label">PUBLICADOS</span>
+                        <strong id="publishedProducts">—</strong>
+
+                        <span class="stat-description">
+                            Visibles en la tienda
+                        </span>
+                    </article>
+
+                    <article class="stat-card">
+                        <span class="stat-label">SIN STOCK</span>
+                        <strong id="outOfStock">—</strong>
+
+                        <span class="stat-description">
+                            Productos sin unidades
+                        </span>
+                    </article>
+
+                </section>
+
+                <!-- CATÁLOGO DE PRODUCTOS -->
+
+                <section class="products-section" id="products">
+
+                    <div class="section-heading">
+
+                        <div>
+                            <p class="eyebrow">CATÁLOGO</p>
+                            <h2>Productos</h2>
+                        </div>
+
+                        <button
+                            type="button"
+                            id="addProductButton"
+                            class="primary-button"
+                        >
+                            + Agregar producto
+                        </button>
+
+                    </div>
+
+                    <div class="products-table-container">
+
+                        <div id="productList" class="product-list">
+                            <p>Cargando productos...</p>
+                        </div>
+
+                    </div>
+
+                </section>
+
+                <!-- FORMULARIO PARA AGREGAR PRODUCTOS -->
+
+                <section
+                    class="product-form-section"
+                    id="productFormSection"
+                    hidden
+                >
+
+                    <div class="section-heading">
+
+                        <div>
+                            <p class="eyebrow">NUEVO REGISTRO</p>
+                            <h2>Agregar perfume</h2>
+                        </div>
+
+                        <button
+                            type="button"
+                            id="cancelProductButton"
+                            class="secondary-button"
+                        >
+                            Cancelar
+                        </button>
+
+                    </div>
+
+                    <form id="productForm">
+
+                        <div class="product-form-grid">
+
+                            <div class="form-group">
+
+                                <label for="productName">
+                                    Nombre del perfume
+                                </label>
+
+                                <input
+                                    type="text"
+                                    id="productName"
+                                    placeholder="Ej. Flor de Ámbar"
+                                    required
+                                >
+
+                            </div>
+
+                            <div class="form-group">
+
+                                <label for="productPrice">
+                                    Precio
+                                </label>
+
+                                <input
+                                    type="number"
+                                    id="productPrice"
+                                    placeholder="Ej. 25000"
+                                    min="0.01"
+                                    step="0.01"
+                                    required
+                                >
+
+                            </div>
+
+                            <div class="form-group">
+
+                                <label for="productCategory">
+                                    Categoría
+                                </label>
+
+                                <select id="productCategory" required>
+
+                                    <option value="">
+                                        Seleccionar categoría
+                                    </option>
+
+                                    <option value="femenino">
+                                        Femenino
+                                    </option>
+
+                                    <option value="masculino">
+                                        Masculino
+                                    </option>
+
+                                    <option value="unisex">
+                                        Unisex
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                            <div class="form-group">
+
+                                <label for="productStock">
+                                    Cantidad disponible
+                                </label>
+
+                                <input
+                                    type="number"
+                                    id="productStock"
+                                    placeholder="Ej. 10"
+                                    min="0"
+                                    step="1"
+                                    value="0"
+                                    required
+                                >
+
+                            </div>
+
+                            <div class="form-group full-width">
+
+                                <label for="productDescription">
+                                    Descripción
+                                </label>
+
+                                <textarea
+                                    id="productDescription"
+                                    placeholder="Describí el perfume..."
+                                    rows="4"
+                                ></textarea>
+
+                            </div>
+
+                            <!-- FOTOGRAFÍAS DEL PRODUCTO -->
+
+                            <div class="form-group full-width">
+
+                                <label for="productImages">
+                                    Fotografías del perfume
+                                </label>
+
+                                <input
+                                    type="file"
+                                    id="productImages"
+                                    accept="image/jpeg, image/png, image/webp"
+                                    multiple
+                                >
+
+                                <small>
+                                    Podés seleccionar varias imágenes.
+                                    Formatos permitidos: JPG, PNG y WEBP.
+                                </small>
+
+                            </div>
+
+                            <!-- ADMINISTRAR IMÁGENES EXISTENTES -->
+
+                            <div
+                                class="form-group full-width"
+                                id="existingImagesSection"
+                                hidden
+                            >
+
+                                <label>Fotografías actuales</label>
+
+                                <p class="image-manager-description">
+                                    Podés cambiar el orden de las fotografías
+                                    o eliminar las que ya no quieras utilizar.
+                                </p>
+
+                                <div
+                                    id="existingImagesList"
+                                    class="existing-images-list"
+                                >
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <label class="publication-option">
+
+                            <input
+                                type="checkbox"
+                                id="productPublished"
+                                checked
+                            >
+
+                            Publicar este producto en la tienda
+
+                        </label>
+
+                        <div class="form-actions">
+
+                            <button
+                                type="submit"
+                                class="primary-button"
+                            >
+                                Guardar producto
+                            </button>
+
+                        </div>
+
+                        <p id="productFormMessage" role="status"></p>
+
+                    </form>
+
+                </section>
+
+                <!-- MI CUENTA -->
+                <section class="product-form-section" id="account">
+
+                    <div class="section-heading">
+                        <div>
+                            <p class="eyebrow">CONFIGURACIÓN</p>
+                            <h2>Mi cuenta</h2>
+                            <p>Administrá la seguridad de tu cuenta.</p>
+                        </div>
+                    </div>
+
+                    <form id="changePasswordForm">
+
+                        <div class="form-group">
+                            <label for="accountNewPassword">Nueva contraseña</label>
+                            <input
+                                type="password"
+                                id="accountNewPassword"
+                                minlength="8"
+                                autocomplete="new-password"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="accountConfirmPassword">Confirmar contraseña</label>
+                            <input
+                                type="password"
+                                id="accountConfirmPassword"
+                                minlength="8"
+                                autocomplete="new-password"
+                                required
+                            >
+                        </div>
+
+                        <button type="submit" id="changePasswordButton" class="primary-button">
+                            CAMBIAR CONTRASEÑA
+                        </button>
+
+                        <p id="changePasswordMessage" role="status"></p>
+
+                    </form>
+
+                </section>
+
+            </section>
+
+        </main>
+
+    </div>
+
+    <script type="module" src="dashboard.js"></script>
+
+</body>
+</html>

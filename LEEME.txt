@@ -1,0 +1,16 @@
+VELORA — Sitio web de demostración
+
+Archivos:
+- index.html: estructura y contenido.
+- style.css: diseño visual y adaptación a celulares.
+- script.js: menú móvil, filtros del catálogo y botón de volver arriba.
+
+Para probar:
+1. Descomprimí la carpeta.
+2. Abrí index.html en el navegador.
+3. Para publicar en GitHub Pages, subí index.html, style.css y script.js a la raíz del repositorio.
+
+Importante:
+- Los nombres, precios, dirección, horarios, correo y número de WhatsApp son ficticios.
+- Las fotografías se cargan desde Unsplash, por lo que se necesita conexión a Internet.
+- Antes de usarlo para un negocio real, reemplazá todos los datos de demostración y verificá las imágenes/licencias.
