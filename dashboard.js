@@ -280,17 +280,29 @@ imageElement.loading = "lazy";
 
         }
 
-        // BOTÓN EDITAR
+// BOTÓN EDITAR
 
-        const editButton = document.createElement("button");
+const editButton = document.createElement("button");
 
-        editButton.type = "button";
-        editButton.textContent = "Editar";
-        editButton.classList.add("secondary-button");
+editButton.type = "button";
+editButton.textContent = "Editar";
+editButton.classList.add("secondary-button");
 
-        editButton.addEventListener("click", function () {
-            editProduct(product);
-        });
+editButton.addEventListener("click", function () {
+    editProduct(product);
+});
+
+// BOTÓN ELIMINAR PRODUCTO
+
+const deleteButton = document.createElement("button");
+
+deleteButton.type = "button";
+deleteButton.textContent = "Eliminar";
+deleteButton.classList.add("delete-image-button");
+
+deleteButton.addEventListener("click", function () {
+    deleteProduct(product);
+});
 
         productCard.innerHTML = `
             <div class="admin-product-info">
@@ -331,10 +343,92 @@ imageElement.loading = "lazy";
             status;
 
         productCard.insertBefore(imageContainer, productCard.firstChild);
-        productCard.appendChild(editButton);
+        const productActions = document.createElement("div");
+
+        productActions.classList.add("existing-image-actions");
+
+        productActions.appendChild(editButton);
+        productActions.appendChild(deleteButton);
+
+productCard.appendChild(productActions);
 
         productList.appendChild(productCard);
     }
+}
+
+// ELIMINAR PRODUCTO COMPLETO
+
+async function deleteProduct(product) {
+
+    const confirmed = confirm(
+        `¿Estás seguro de que querés eliminar "${product.name}" y todas sus fotografías? Esta acción no se puede deshacer.`
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    const { data: images, error: imagesError } = await supabase
+        .from("product_images")
+        .select("id, storage_path")
+        .eq("product_id", product.id);
+
+    if (imagesError) {
+        console.error("Error al obtener las fotografías:", imagesError);
+        alert("No se pudieron obtener las fotografías del producto.");
+        return;
+    }
+
+    // ELIMINAR ARCHIVOS DEL ALMACENAMIENTO
+
+    if (images && images.length > 0) {
+
+        const storagePaths = images.map(function (image) {
+            return image.storage_path;
+        });
+
+        const { error: storageError } = await supabase
+            .storage
+            .from("product-images")
+            .remove(storagePaths);
+
+        if (storageError) {
+            console.error("Error al eliminar fotografías:", storageError);
+            alert("No se pudieron eliminar las fotografías. El producto sigue guardado.");
+            return;
+        }
+
+        // ELIMINAR REGISTROS DE LAS FOTOGRAFÍAS
+
+        const { error: databaseImagesError } = await supabase
+            .from("product_images")
+            .delete()
+            .eq("product_id", product.id);
+
+        if (databaseImagesError) {
+            console.error("Error al eliminar registros:", databaseImagesError);
+            alert("No se pudieron eliminar los registros de las fotografías.");
+            return;
+        }
+    }
+
+    // ELIMINAR PRODUCTO
+
+    const { error: productError } = await supabase
+        .from("Productos")
+        .delete()
+        .eq("id", product.id);
+
+    if (productError) {
+        console.error("Error al eliminar producto:", productError);
+        alert("No se pudo eliminar el producto. Revisá los permisos de Supabase.");
+        return;
+    }
+
+    alert("Producto eliminado correctamente.");
+
+    await loadStatistics();
+    await loadProducts();
 }
 
 // LIBERAR LAS VISTAS PREVIAS TEMPORALES
