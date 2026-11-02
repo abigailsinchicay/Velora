@@ -399,29 +399,37 @@ async function createProductCard(product, images) {
         });
     }
 
-    // ENLACE DE WHATSAPP
+// ENLACE DE WHATSAPP
 
-    const link = document.createElement("a");
+const link = document.createElement("a");
 
-    link.className = "product-link";
+link.className = "product-link";
 
-    link.href = createWhatsAppUrl(
-        `Hola VELORA, quisiera consultar por el perfume ${product.name}. ¿Me podrían brindar más información?`
-    );
+link.href = createWhatsAppUrl(
+    `Hola VELORA, quisiera consultar por el perfume ${product.name}. ¿Me podrían brindar más información?`
+);
 
-    link.target = "_blank";
-    link.rel = "noopener";
-    link.dataset.product = product.name;
+link.target = "_blank";
+link.rel = "noopener";
+link.dataset.product = product.name;
 
-    link.appendChild(
-        document.createTextNode("Consultar por WhatsApp ")
-    );
+// ÍCONO DE WHATSAPP
+const whatsappIcon = document.createElement("i");
 
-    const arrow = document.createElement("span");
+whatsappIcon.className = "fa-brands fa-whatsapp whatsapp-icon";
+whatsappIcon.setAttribute("aria-hidden", "true");
 
-    arrow.textContent = "↗";
+link.appendChild(whatsappIcon);
 
-    link.appendChild(arrow);
+link.appendChild(
+    document.createTextNode(" Consultar por WhatsApp ")
+);
+
+const arrow = document.createElement("span");
+
+arrow.textContent = "↗";
+
+link.appendChild(arrow);
 
     // ARMAR LA TARJETA
 
