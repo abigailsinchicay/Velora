@@ -1,991 +1,486 @@
-import { supabase } from "./supabase-config.js";
-
-// ======================================
-// VELORA — INTERACCIONES DEL SITIO
-// ======================================
-
-// NÚMERO DE WHATSAPP
-const whatsappNumber = "5491122801630";
-
-// CREAR ENLACES DE WHATSAPP
-function createWhatsAppUrl(message) {
-    return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-}
-
-// BOTONES GENERALES DE WHATSAPP
-document.querySelectorAll('[data-whatsapp="general"]').forEach((link) => {
-    link.href = createWhatsAppUrl(
-        "Hola VELORA, quisiera hacer una consulta."
-    );
-});
-
-
-// ======================================
-// MENÚ ADAPTABLE PARA CELULARES
-// ======================================
-
-const menuToggle = document.getElementById("menuToggle");
-const mainNav = document.getElementById("mainNav");
-
-if (menuToggle && mainNav) {
-    menuToggle.addEventListener("click", () => {
-        const isOpen = mainNav.classList.toggle("open");
-        menuToggle.setAttribute("aria-expanded", isOpen);
-    });
-
-    mainNav.querySelectorAll("a").forEach((link) => {
-        link.addEventListener("click", () => {
-            mainNav.classList.remove("open");
-            menuToggle.setAttribute("aria-expanded", "false");
-        });
-    });
-}
-
-
-// ======================================
-// CATÁLOGO DE PRODUCTOS
-// ======================================
-
-const productGrid = document.getElementById("productGrid");
-const categoryButtons = document.querySelectorAll(".category-chip");
-const productSearch = document.getElementById("productSearch");
-const noProductsMessage = document.getElementById("noProductsMessage");
-const productSort = document.getElementById("productSort");
-
-let selectedCategory = "todos";
-let selectedSearchTerm = "";
-
-function formatPrice(price) {
-    return new Intl.NumberFormat("es-AR", {
-        style: "currency",
-        currency: "ARS",
-        maximumFractionDigits: 0
-    }).format(price);
-}
-
-function formatCategory(category) {
-    const categories = {
-        femenino: "FEMENINO",
-        masculino: "MASCULINO",
-        unisex: "UNISEX"
-    };
-
-    return categories[category] || "FRAGANCIA";
-}
-
-// NORMALIZAR TEXTO PARA LAS BÚSQUEDAS
-function normalizeText(text) {
-    return text
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
-}
-
-
-// ======================================
-// GALERÍA DE FOTOGRAFÍAS
-// ======================================
-
-const galleryModal = document.getElementById("galleryModal");
-const galleryClose = document.getElementById("galleryClose");
-const galleryMainImage = document.getElementById("galleryMainImage");
-const galleryTitle = document.getElementById("galleryTitle");
-const galleryPrice = document.getElementById("galleryPrice");
-const galleryDescription = document.getElementById("galleryDescription");
-const galleryThumbnails = document.getElementById("galleryThumbnails");
-const galleryPrev = document.getElementById("galleryPrev");
-const galleryNext = document.getElementById("galleryNext");
-const galleryWhatsapp = document.getElementById("galleryWhatsapp");
-
-let currentGalleryImages = [];
-let currentGalleryIndex = 0;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="VELORA — Perfumería. Fragancias para cada momento.">
+    <title>VELORA | Perfumería</title>
 
-async function getImageUrl(storagePath) {
-    const { data, error } = await supabase.storage
-        .from("product-images")
-        .createSignedUrl(storagePath, 3600);
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    if (error) {
-        throw error;
-    }
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
 
-    return data.signedUrl;
-}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
 
+<body>
 
-// MOSTRAR LA FOTOGRAFÍA SELECCIONADA
+    <div class="announcement">
+        DESCUBRÍ TU PRÓXIMA FRAGANCIA · ENVÍOS A TODO EL PAÍS
+    </div>
 
-function updateGalleryImage() {
-    const image = currentGalleryImages[currentGalleryIndex];
 
-    if (!image) {
-        return;
-    }
+<header class="site-header">
 
-    galleryMainImage.src = image.url;
-    galleryMainImage.alt = image.alt || "Fotografía del perfume";
+    <a class="brand" href="#inicio" aria-label="VELORA, inicio">
+        <span class="brand-name">VELORA</span>
+        <span class="brand-subtitle">PERFUMERÍA</span>
+    </a>
 
-    galleryPrev.disabled = currentGalleryIndex === 0;
-    galleryNext.disabled =
-        currentGalleryIndex === currentGalleryImages.length - 1;
+    <!-- BOTÓN DEL CARRITO -->
+    <button class="cart-toggle" id="cartToggle" type="button"
+            aria-label="Abrir carrito">
+        <span class="cart-icon">♧</span>
+        <span class="cart-text">MI CARRITO</span>
+        <span class="cart-count" id="cartCount">0</span>
+    </button>
 
-    galleryThumbnails.querySelectorAll(".gallery-thumbnail").forEach((button, index) => {
-        button.classList.toggle("active", index === currentGalleryIndex);
-    });
-}
+    <button class="menu-toggle" id="menuToggle"
+            aria-label="Abrir menú" aria-expanded="false">
+        <span></span>
+        <span></span>
+    </button>
 
+    <nav class="main-nav" id="mainNav">
+        <a href="#inicio">Inicio</a>
+        <a href="#coleccion">Colección</a>
+        <a href="#nosotros">Nosotros</a>
+        <a href="#contacto">Contacto</a>
+    </nav>
 
-// ABRIR LA GALERÍA
+    <a class="header-link" href="#coleccion">
+        EXPLORAR <span>↗</span>
+    </a>
 
-async function openGallery(product, images) {
-    if (!galleryModal || images.length === 0) {
-        return;
-    }
+</header>
 
-    try {
-        currentGalleryImages = await Promise.all(
-            images.map(async (image) => ({
-                url: await getImageUrl(image.storage_path),
-                alt: image.alt_text || product.name
-            }))
-        );
-    } catch (error) {
-        console.error("Error al cargar las fotografías:", error);
-        return;
-    }
+    <main>
 
-    currentGalleryIndex = 0;
+        <!-- PORTADA -->
 
-    galleryTitle.textContent = product.name;
-    galleryPrice.textContent = formatPrice(product.price);
-    galleryDescription.textContent =
-        product.description || "Descubrí esta fragancia de VELORA.";
+        <section class="hero" id="inicio">
 
-    galleryWhatsapp.href = createWhatsAppUrl(
-        `Hola VELORA, quisiera consultar por el perfume ${product.name}. ¿Me podrían brindar más información?`
-    );
+            <div class="hero-copy">
 
-    galleryThumbnails.textContent = "";
+                <p class="eyebrow">
+                    <span></span> EL ARTE DE ELEGIR TU ESENCIA
+                </p>
 
-    currentGalleryImages.forEach((image, index) => {
-        const button = document.createElement("button");
-        button.className = "gallery-thumbnail";
-        button.type = "button";
-        button.setAttribute("aria-label", `Ver fotografía ${index + 1}`);
+                <h1>
+                    Hay aromas que<br>
+                    <em>cuentan historias.</em>
+                </h1>
 
-        const thumbnail = document.createElement("img");
-        thumbnail.src = image.url;
-        thumbnail.alt = image.alt;
+                <p class="hero-description">
+                    Encontrá esa fragancia que habla de vos.
+                    Una selección especial para acompañar cada versión de quien sos.
+                </p>
 
-        button.appendChild(thumbnail);
+                <div class="hero-actions">
 
-        button.addEventListener("click", () => {
-            currentGalleryIndex = index;
-            updateGalleryImage();
-        });
+                    <a class="button button-whatsapp hero-whatsapp"
+                       data-whatsapp="general"
+                       href="https://wa.me/5491100000000"
+                       target="_blank"
+                       rel="noopener">
 
-        galleryThumbnails.appendChild(button);
-    });
+                        <i class="fa-brands fa-whatsapp whatsapp-icon" aria-hidden="true"></i>
+                        Consultanos por WhatsApp
+                        <span>↗</span>
 
-    updateGalleryImage();
+                    </a>
 
-    galleryModal.classList.add("open");
-    galleryModal.setAttribute("aria-hidden", "false");
-    document.body.style.overflow = "hidden";
+                    <a class="text-link" href="#coleccion">
+                        Descubrir colección →
+                    </a>
 
-    galleryClose.focus();
-}
+                </div>
 
+                <div class="hero-note">
+                    <span class="note-line"></span>
+                    FRAGANCIAS · BELLEZA · EXPERIENCIAS
+                </div>
 
-// CERRAR LA GALERÍA
+            </div>
 
-function closeGallery() {
-    if (!galleryModal) {
-        return;
-    }
+            <div class="hero-visual">
 
-    galleryModal.classList.remove("open");
-    galleryModal.setAttribute("aria-hidden", "true");
-    document.body.style.overflow = "";
+                <div class="hero-image"></div>
 
-    currentGalleryImages = [];
-    currentGalleryIndex = 0;
+                <div class="hero-stamp">
+                    <span>V</span>
+                    <small>YOUR<br>OWN<br>ESSENCE</small>
+                </div>
 
-    galleryMainImage.src = "";
-}
+                <p class="image-caption">
+                    Una esencia para cada momento.
+                </p>
 
+            </div>
 
-// BOTONES DE NAVEGACIÓN
+        </section>
 
-if (galleryPrev) {
-    galleryPrev.addEventListener("click", () => {
-        if (currentGalleryIndex > 0) {
-            currentGalleryIndex--;
-            updateGalleryImage();
-        }
-    });
-}
 
-if (galleryNext) {
-    galleryNext.addEventListener("click", () => {
-        if (currentGalleryIndex < currentGalleryImages.length - 1) {
-            currentGalleryIndex++;
-            updateGalleryImage();
-        }
-    });
-}
+        <!-- FRASE DESTACADA -->
 
+        <section class="intro-strip">
+            <p>UN UNIVERSO DE FRAGANCIAS</p>
+            <span>✳</span>
+            <p>DETALLES QUE MARCAN LA DIFERENCIA</p>
+            <span>✳</span>
+            <p>ENCONTRÁ TU ESENCIA</p>
+        </section>
 
-// EVENTOS PARA CERRAR
 
-if (galleryClose) {
-    galleryClose.addEventListener("click", closeGallery);
-}
+        <!-- COLECCIÓN -->
 
-if (galleryModal) {
-    galleryModal.querySelectorAll("[data-gallery-close]").forEach((element) => {
-        element.addEventListener("click", closeGallery);
-    });
-}
+        <section class="collection section" id="coleccion">
 
+            <div class="section-heading">
 
-// CERRAR CON ESCAPE Y NAVEGAR CON LAS FLECHAS
+                <div>
+                    <p class="eyebrow">NUESTRA SELECCIÓN</p>
+                    <h2>Elegí cómo querés <em>sentirte.</em></h2>
+                </div>
 
-document.addEventListener("keydown", (event) => {
-    if (!galleryModal || !galleryModal.classList.contains("open")) {
-        return;
-    }
+                <p class="heading-note">
+                    Una selección de fragancias para distintos estilos,
+                    ocasiones y personalidades.
+                </p>
 
-    if (event.key === "Escape") {
-        closeGallery();
-    }
+            </div>
 
-    if (event.key === "ArrowLeft" && currentGalleryIndex > 0) {
-        currentGalleryIndex--;
-        updateGalleryImage();
-    }
+            <!-- BUSCADOR DE FRAGANCIAS -->
 
-    if (
-        event.key === "ArrowRight" &&
-        currentGalleryIndex < currentGalleryImages.length - 1
-    ) {
-        currentGalleryIndex++;
-        updateGalleryImage();
-    }
-});
+            <div class="product-search">
+                <span class="search-icon">⌕</span>
 
+                <input
+                    type="search"
+                    id="productSearch"
+                    placeholder="Buscar una fragancia..."
+                    aria-label="Buscar perfumes"
+                >
+            </div>
 
-// ======================================
-// CREAR UNA TARJETA DE PRODUCTO
-// ======================================
+            <!-- ORDENAR PRODUCTOS -->
 
-async function createProductCard(product, images) {
-    const card = document.createElement("article");
+            <div class="product-sort">
+                <label for="productSort">Ordenar por:</label>
 
-    card.className = "product-card";
-    card.dataset.category = product.category || "";
-    card.dataset.price = Number(product.price) || 0;
+                <select id="productSort">
+                    <option value="original">Orden original</option>
+                    <option value="ascending">Menor precio</option>
+                    <option value="descending">Mayor precio</option>
+                </select>
+            </div>
 
-    // TEXTO QUE SE UTILIZARÁ EN EL BUSCADOR
-    card.dataset.search = normalizeText(
-        `${product.name} ${product.description || ""} ${product.category || ""}`
-    );
+            <!-- FILTROS -->
 
-    // IMAGEN DEL PRODUCTO
+            <div class="category-row" aria-label="Categorías de fragancias">
 
-    const imageContainer = document.createElement("div");
+                <button class="category-chip active" data-filter="todos">
+                    Todos
+                </button>
 
-    imageContainer.className = "product-image";
+                <button class="category-chip" data-filter="femenino">
+                    Femeninos
+                </button>
 
-    if (product.stock <= 0) {
-        imageContainer.classList.add("out-of-stock");
-    }
+                <button class="category-chip" data-filter="masculino">
+                    Masculinos
+                </button>
 
-    if (images.length > 0) {
-        const imageUrl = await getImageUrl(images[0].storage_path);
+                <button class="category-chip" data-filter="unisex">
+                    Unisex
+                </button>
 
-        imageContainer.style.backgroundImage = `url("${imageUrl}")`;
-        imageContainer.style.backgroundSize = "cover";
-        imageContainer.style.backgroundPosition = "center";
+            </div>
 
-        imageContainer.setAttribute("role", "button");
-        imageContainer.setAttribute("tabindex", "0");
-        imageContainer.setAttribute("aria-label", `Ver fotografías de ${product.name}`);
 
-        imageContainer.addEventListener("click", () => {
-            openGallery(product, images);
-        });
+       <!-- PRODUCTOS DINÁMICOS -->
 
-        imageContainer.addEventListener("keydown", (event) => {
-            if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                openGallery(product, images);
-            }
-        });
-    }
+       <div class="product-grid" id="productGrid">
+        
+            <p class="catalog-message">
+                Cargando fragancias...
+            </p>
 
-    const label = document.createElement("span");
+        </div>
 
-    label.className = "product-label";
-    label.textContent = product.stock > 0 ? "DISPONIBLE" : "AGOTADO";
+        <p id="noProductsMessage" class="catalog-message" hidden>
+            No encontramos fragancias que coincidan con tu búsqueda.
+            Probá con otro nombre o categoría.
+        </p>
 
-    imageContainer.appendChild(label);
+        </section>
+        <!-- NOSOTROS -->
 
-    // INFORMACIÓN DEL PRODUCTO
+        <section class="brand-story" id="nosotros">
 
-    const meta = document.createElement("div");
+            <div class="story-image"></div>
 
-    meta.className = "product-meta";
+            <div class="story-copy">
 
-    const categoryText = document.createElement("span");
+                <p class="eyebrow">EL UNIVERSO VELORA</p>
 
-    categoryText.textContent = formatCategory(product.category);
+                <h2>
+                    Tu esencia.<br>
+                    <em>Tu manera de estar.</em>
+                </h2>
 
-    meta.appendChild(categoryText);
+                <p>
+                    En VELORA creemos que un aroma puede despertar recuerdos,
+                    acompañar momentos y convertirse en parte de nuestra identidad.
+                </p>
 
-    // NOMBRE Y PRECIO
+                <p>
+                    Por eso imaginamos un espacio donde descubrir nuevas fragancias
+                    sea una experiencia personal, cercana y especial.
+                </p>
 
-    const titleRow = document.createElement("div");
+                <a class="text-link dark-link" href="#contacto">
+                    Estamos para ayudarte <span>→</span>
+                </a>
 
-    titleRow.className = "product-title-row";
+                <div class="story-signature">
+                    VELORA <span>— PERFUMERÍA</span>
+                </div>
 
-    const title = document.createElement("h3");
+            </div>
 
-    title.textContent = product.name;
+        </section>
 
-    const price = document.createElement("span");
 
-    price.className = "price";
-    price.textContent = formatPrice(product.price);
+        <!-- EXPERIENCIA -->
 
-    titleRow.append(title, price);
+        <section class="experience section">
 
-    // DESCRIPCIÓN
+            <p class="eyebrow">MÁS QUE UN PERFUME</p>
 
-    const description = document.createElement("p");
+            <h2>
+                Pequeños detalles,<br>
+                <em>grandes recuerdos.</em>
+            </h2>
 
-    description.className = "product-description";
-    description.textContent =
-        product.description || "Descubrí esta fragancia de VELORA.";
+            <div class="experience-grid">
 
-    // UNIDADES DISPONIBLES
+                <div>
+                    <span class="experience-number">01</span>
+                    <h3>Encontrá tu estilo</h3>
+                    <p>Explorá aromas que acompañen tu personalidad.</p>
+                </div>
 
-    const stockInfo = document.createElement("p");
+                <div>
+                    <span class="experience-number">02</span>
+                    <h3>Elegí para regalar</h3>
+                    <p>Un detalle especial para sorprender a alguien.</p>
+                </div>
 
-    stockInfo.className = "product-stock";
+                <div>
+                    <span class="experience-number">03</span>
+                    <h3>Viví la experiencia</h3>
+                    <p>Te ayudamos a encontrar tu próxima fragancia.</p>
+                </div>
 
-    if (product.stock <= 0) {
-        stockInfo.textContent = "Sin stock disponible";
-    } else if (product.stock <= 3) {
-        stockInfo.textContent = `¡Últimas unidades! (${product.stock} disponibles)`;
-    } else {
-        stockInfo.textContent = `${product.stock} unidades disponibles`;
-    }
+            </div>
 
-    // BOTÓN PARA AGREGAR AL CARRITO
+        </section>
 
-    const addButton = document.createElement("button");
 
-    addButton.className = "add-to-cart";
-    addButton.type = "button";
-    addButton.textContent = "AGREGAR AL CARRITO";
+        <!-- CONTACTO -->
 
-    if (product.stock <= 0) {
-        addButton.disabled = true;
-        addButton.textContent = "SIN STOCK";
-    } else {
-        addButton.addEventListener("click", () => {
-            addToCart(product);
-        });
-    }
+        <section class="contact-section" id="contacto">
 
-// ENLACE DE WHATSAPP
+            <div class="contact-copy">
 
-const link = document.createElement("a");
+                <p class="eyebrow">HABLEMOS</p>
 
-link.className = "product-link";
+                <h2>
+                    Tu próxima fragancia<br>
+                    te está <em>esperando.</em>
+                </h2>
 
-link.href = createWhatsAppUrl(
-    `Hola VELORA, quisiera consultar por el perfume ${product.name}. ¿Me podrían brindar más información?`
-);
+                <p>
+                    ¿Buscás un aroma en particular o necesitás una recomendación?
+                    Escribinos y te ayudamos.
+                </p>
 
-link.target = "_blank";
-link.rel = "noopener";
-link.dataset.product = product.name;
+                <a class="button button-whatsapp contact-whatsapp"
+                   data-whatsapp="general"
+                   href="https://wa.me/5491100000000"
+                   target="_blank"
+                   rel="noopener">
 
-// ÍCONO DE WHATSAPP
-const whatsappIcon = document.createElement("i");
+                    <i class="fa-brands fa-whatsapp whatsapp-icon" aria-hidden="true"></i>
+                    ¡Escribinos por WhatsApp!
+                    <span>↗</span>
 
-whatsappIcon.className = "fa-brands fa-whatsapp whatsapp-icon";
-whatsappIcon.setAttribute("aria-hidden", "true");
+                </a>
 
-link.appendChild(whatsappIcon);
+                <small>
+                    WhatsApp de demostración: reemplazar por el número real.
+                </small>
 
-link.appendChild(
-    document.createTextNode(" Consultar por WhatsApp ")
-);
+            </div>
 
-const arrow = document.createElement("span");
 
-arrow.textContent = "↗";
+            <div class="contact-details">
 
-link.appendChild(arrow);
+                <div>
+                    <span>VISITANOS</span>
+                    <p>Buenos Aires, Argentina</p>
+                </div>
 
-    // ARMAR LA TARJETA
+                <div>
+                    <span>HORARIOS</span>
+                    <p>Lunes a sábado · 10:00 a 19:00</p>
+                </div>
 
-    card.append(
-        imageContainer,
-        meta,
-        titleRow,
-        description,
-        stockInfo,
-        addButton,
-        link
-    );
+                <div>
+                    <span>SEGUINOS</span>
+                    <p><a href="#">Instagram</a> · <a href="#">Facebook</a></p>
+                </div>
 
-    return card;
-}
+                <div>
+                    <span>ESCRIBINOS</span>
+                    <p>hola@velora.com</p>
+                </div>
 
-// ======================================
-// APLICAR FILTROS Y BÚSQUEDA
-// ======================================
+            </div>
 
-function applyCategoryFilter() {
-    const cards = productGrid.querySelectorAll(".product-card");
+        </section>
 
-    let visibleProducts = 0;
+    </main>
 
-    cards.forEach((card) => {
-        const matchesCategory =
-            selectedCategory === "todos" ||
-            card.dataset.category === selectedCategory;
 
-        const matchesSearch =
-            card.dataset.search.includes(selectedSearchTerm);
+    <!-- PIE DE PÁGINA -->
 
-        const isVisible = matchesCategory && matchesSearch;
+    <footer>
 
-        card.hidden = !isVisible;
+        <a class="brand footer-brand" href="#inicio">
+            <span class="brand-name">VELORA</span>
+            <span class="brand-subtitle">PERFUMERÍA</span>
+        </a>
 
-        if (isVisible) {
-            visibleProducts++;
-        }
-    });
+        <p>Una esencia para cada momento.</p>
 
-    if (noProductsMessage) {
-        noProductsMessage.hidden = visibleProducts > 0;
-    }
-}
+        <span class="copyright">
+            © 2026 VELORA · SITIO DE DEMOSTRACIÓN
+        </span>
 
-// ======================================
-// ORDENAR PRODUCTOS POR PRECIO
-// ======================================
+    </footer>
 
-function sortProducts() {
-    const cards = Array.from(
-        productGrid.querySelectorAll(".product-card")
-    );
 
-    const sortMode = productSort ? productSort.value : "original";
+    <!-- BOTÓN FLOTANTE DE WHATSAPP -->
 
-    cards.sort((a, b) => {
-        if (sortMode === "ascending") {
-            return Number(a.dataset.price) - Number(b.dataset.price);
-        }
+    <a class="floating-whatsapp"
+       data-whatsapp="general"
+       href="https://wa.me/5491100000000"
+       target="_blank"
+       rel="noopener"
+       aria-label="Escribinos por WhatsApp">
 
-        if (sortMode === "descending") {
-            return Number(b.dataset.price) - Number(a.dataset.price);
-        }
+        <i class="fa-brands fa-whatsapp whatsapp-icon" aria-hidden="true"></i>
+        <span>WhatsApp</span>
 
-        return Number(a.dataset.originalOrder) -
-               Number(b.dataset.originalOrder);
-    });
+    </a>
 
-    cards.forEach((card) => {
-        productGrid.appendChild(card);
-    });
-}
 
-// EVENTOS DE LOS FILTROS
+    <!-- VOLVER AL INICIO -->
 
-categoryButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-        selectedCategory = button.dataset.filter;
+    <a href="#inicio" class="back-to-top" aria-label="Volver al inicio">
+        ↑
+    </a>
 
-        categoryButtons.forEach((item) => {
-            item.classList.remove("active");
-        });
+<!-- PANEL DEL CARRITO -->
+<div class="cart-overlay" id="cartOverlay">
+    <aside class="cart-panel" id="cartPanel">
 
-        button.classList.add("active");
+        <div class="cart-header">
+            <div>
+                <span class="cart-subtitle">TU SELECCIÓN</span>
+                <h2>Mi carrito</h2>
+            </div>
 
-        applyCategoryFilter();
-    });
-});
+            <button class="cart-close" id="cartClose" type="button"
+                    aria-label="Cerrar carrito">
+                ×
+            </button>
+        </div>
 
+        <div class="cart-items" id="cartItems">
+            <p class="cart-empty">Todavía no agregaste productos.</p>
+        </div>
 
-// EVENTO DEL BUSCADOR
+        <div class="cart-footer">
+            <div class="cart-total">
+                <button class="cart-clear" id="cartClear" type="button">
+                    VACIAR CARRITO
+                </button>
+                <span>Total</span>
+                <strong id="cartTotal">$0</strong>
+            </div>
 
-if (productSearch) {
-    productSearch.addEventListener("input", () => {
-        selectedSearchTerm = normalizeText(productSearch.value.trim());
+            <button class="cart-checkout" id="cartCheckout" type="button" disabled>
+                FINALIZAR PEDIDO
+            </button>
 
-        applyCategoryFilter();
-    });
-}
+            <p class="cart-note">
+                El pedido se enviará por WhatsApp para confirmar la compra.
+            </p>
+        </div>
 
-// EVENTO DEL ORDENAMIENTO
+    </aside>
+</div>
 
-if (productSort) {
-    productSort.addEventListener("change", () => {
-        sortProducts();
-    });
-}
+<!-- GALERÍA DE FOTOGRAFÍAS DEL PRODUCTO -->
+<div class="gallery-modal" id="galleryModal" aria-hidden="true">
+    <div class="gallery-overlay" data-gallery-close></div>
 
-// ======================================
-// CARGAR PRODUCTOS DESDE SUPABASE
-// ======================================
+    <div class="gallery-dialog" role="dialog" aria-modal="true" aria-labelledby="galleryTitle">
 
-async function loadProducts() {
-    if (!productGrid) {
-        return;
-    }
+        <button class="gallery-close" id="galleryClose" aria-label="Cerrar galería">
+            ×
+        </button>
 
-    try {
-        // OBTENER PRODUCTOS PUBLICADOS
+        <div class="gallery-content">
 
-        const { data: products, error: productsError } = await supabase
-            .from("Productos")
-            .select("*")
-            .eq("is_published", true)
-            .order("created_at", { ascending: false });
+            <div class="gallery-image-area">
+                <button class="gallery-arrow gallery-prev" id="galleryPrev" aria-label="Fotografía anterior">
+                    ‹
+                </button>
 
-        if (productsError) {
-            throw productsError;
-        }
+                <img id="galleryMainImage" src="" alt="">
 
-        // SI NO HAY PRODUCTOS
+                <button class="gallery-arrow gallery-next" id="galleryNext" aria-label="Fotografía siguiente">
+                    ›
+                </button>
+            </div>
 
-        if (!products || products.length === 0) {
-            productGrid.textContent = "";
+            <div class="gallery-thumbnails" id="galleryThumbnails"></div>
 
-            const message = document.createElement("p");
+            <div class="gallery-product-info">
+                <p class="eyebrow">VELORA · PERFUMERÍA</p>
+                <h2 id="galleryTitle"></h2>
+                <p class="gallery-price" id="galleryPrice"></p>
+                <p class="gallery-description" id="galleryDescription"></p>
 
-            message.className = "catalog-message";
-            message.textContent =
-                "Próximamente vas a encontrar nuevas fragancias.";
+                <a class="button button-whatsapp" id="galleryWhatsapp"
+                   href="#" target="_blank" rel="noopener">
+                    Consultar por WhatsApp ↗
+                </a>
+            </div>
 
-            productGrid.appendChild(message);
+        </div>
+    </div>
+</div>
 
-            return;
-        }
+    <script type="module" src="script.js"></script>
 
-        // OBTENER LAS FOTOGRAFÍAS
+</body>
+</html>
 
-        const { data: images, error: imagesError } = await supabase
-            .from("product_images")
-            .select("product_id, storage_path, position, alt_text")
-            .order("position", { ascending: true });
-
-        if (imagesError) {
-            throw imagesError;
-        }
-
-        // LIMPIAR EL CATÁLOGO
-
-        productGrid.textContent = "";
-
-        // CREAR LAS TARJETAS
-
-        for (let index = 0; index < products.length; index++) {
-            const product = products[index];
-
-            const productImages = (images || []).filter((image) => {
-                return image.product_id === product.id;
-            });
-
-            const card = await createProductCard(product, productImages);
-
-            card.dataset.originalOrder = index;
-
-            productGrid.appendChild(card);
-        }
-
-        // APLICAR LOS FILTROS SELECCIONADOS
-
-        // APLICAR LOS FILTROS Y EL ORDENAMIENTO
-
-        sortProducts();
-        applyCategoryFilter();
-
-    } catch (error) {
-        console.error("Error al cargar los productos:", error);
-
-        productGrid.textContent = "";
-
-        const message = document.createElement("p");
-
-        message.className = "catalog-message";
-        message.textContent =
-            "No pudimos cargar las fragancias. Por favor, intentá nuevamente más tarde.";
-
-        productGrid.appendChild(message);
-    }
-}
-
-
-// INICIAR EL CATÁLOGO
-
-loadProducts();
-
-
-// ======================================
-// BOTÓN PARA VOLVER AL INICIO
-// ======================================
-
-const backToTop = document.querySelector(".back-to-top");
-
-if (backToTop) {
-    window.addEventListener("scroll", () => {
-        backToTop.classList.toggle(
-            "visible",
-            window.scrollY > 450
-        );
-    });
-}
-
-// =========================
-// FUNCIONAMIENTO DEL CARRITO
-// =========================
-
-const cartToggle = document.getElementById("cartToggle");
-const cartOverlay = document.getElementById("cartOverlay");
-const cartClose = document.getElementById("cartClose");
-const cartItems = document.getElementById("cartItems");
-const cartCount = document.getElementById("cartCount");
-const cartTotal = document.getElementById("cartTotal");
-const cartCheckout = document.getElementById("cartCheckout");
-const cartClear = document.getElementById("cartClear");
-
-// Recuperar el carrito guardado
-let cart = [];
-
-try {
-    cart = JSON.parse(localStorage.getItem("veloraCart")) || [];
-} catch (error) {
-    cart = [];
-}
-
-// Guardar los cambios
-function saveCart() {
-    localStorage.setItem("veloraCart", JSON.stringify(cart));
-}
-
-// Actualizar el carrito
-function renderCart() {
-    cartItems.textContent = "";
-
-    let total = 0;
-    let quantityTotal = 0;
-
-    if (cart.length === 0) {
-        const emptyMessage = document.createElement("p");
-
-        emptyMessage.className = "cart-empty";
-        emptyMessage.textContent = "Todavía no agregaste productos.";
-
-        cartItems.appendChild(emptyMessage);
-    }
-
-    cart.forEach((item) => {
-        const subtotal = item.price * item.quantity;
-
-        total += subtotal;
-        quantityTotal += item.quantity;
-
-        const itemElement = document.createElement("div");
-        itemElement.className = "cart-item";
-
-        const info = document.createElement("div");
-        info.className = "cart-item-info";
-
-        const name = document.createElement("h3");
-        name.textContent = item.name;
-
-        const price = document.createElement("p");
-        price.textContent = formatPrice(item.price);
-
-        info.append(name, price);
-
-        const controls = document.createElement("div");
-        controls.className = "cart-item-controls";
-
-        const decrease = document.createElement("button");
-        decrease.type = "button";
-        decrease.textContent = "−";
-        decrease.setAttribute("aria-label", "Disminuir cantidad");
-
-        decrease.addEventListener("click", () => {
-            changeCartQuantity(item.id, -1);
-        });
-
-        const quantity = document.createElement("span");
-        quantity.textContent = item.quantity;
-
-        const increase = document.createElement("button");
-        increase.type = "button";
-        increase.textContent = "+";
-        increase.setAttribute("aria-label", "Aumentar cantidad");
-        increase.disabled = item.quantity >= item.stock;
-
-        increase.addEventListener("click", () => {
-            changeCartQuantity(item.id, 1);
-        });
-
-        const remove = document.createElement("button");
-        remove.type = "button";
-        remove.textContent = "Eliminar";
-        remove.className = "cart-remove";
-
-        remove.addEventListener("click", () => {
-            removeFromCart(item.id);
-        });
-
-        controls.append(decrease, quantity, increase, remove);
-        itemElement.append(info, controls);
-        cartItems.appendChild(itemElement);
-    });
-
-    cartCount.textContent = quantityTotal;
-    cartTotal.textContent = formatPrice(total);
-
-    cartCheckout.disabled = cart.length === 0;
-}
-
-// Mostrar aviso flotante
-function showCartToast(message) {
-    let toast = document.querySelector(".cart-toast");
-
-    if (!toast) {
-        toast = document.createElement("div");
-        toast.className = "cart-toast";
-        toast.setAttribute("role", "status");
-        document.body.appendChild(toast);
-    }
-
-    toast.textContent = message;
-    toast.classList.add("show");
-
-    clearTimeout(toast.timeout);
-
-    toast.timeout = setTimeout(() => {
-        toast.classList.remove("show");
-    }, 2500);
-}
-
-// Agregar un producto
-function addToCart(product) {
-    const existingItem = cart.find((item) => item.id === product.id);
-
-    if (existingItem) {
-        if (existingItem.quantity >= product.stock) {
-            alert("No hay más unidades disponibles de este producto.");
-            return;
-        }
-
-        existingItem.quantity++;
-    } else {
-        cart.push({
-            id: product.id,
-            name: product.name,
-            price: Number(product.price),
-            stock: Number(product.stock),
-            quantity: 1
-        });
-    }
-
-    saveCart();
-    renderCart();
-    showCartToast(`${product.name} se agregó al carrito.`);
-
-    cartToggle.classList.add("cart-added");
-
-    setTimeout(() => {
-        cartToggle.classList.remove("cart-added");
-    }, 500);
-}
-
-// Cambiar cantidad
-function changeCartQuantity(productId, amount) {
-    const item = cart.find((product) => product.id === productId);
-
-    if (!item) {
-        return;
-    }
-
-    item.quantity += amount;
-
-    if (item.quantity <= 0) {
-        removeFromCart(productId);
-        return;
-    }
-
-    if (item.quantity > item.stock) {
-        item.quantity = item.stock;
-    }
-
-    saveCart();
-    renderCart();
-}
-
-// Eliminar producto
-function removeFromCart(productId) {
-    cart = cart.filter((item) => item.id !== productId);
-
-    saveCart();
-    renderCart();
-}
-
-// Vaciar todo el carrito
-function clearCart() {
-    if (cart.length === 0) {
-        return;
-    }
-
-    const confirmClear = confirm(
-        "¿Estás seguro de que querés vaciar el carrito?"
-    );
-
-    if (!confirmClear) {
-        return;
-    }
-
-    cart = [];
-
-    saveCart();
-    renderCart();
-}
-
-// Abrir carrito
-function openCart() {
-    cartOverlay.classList.add("active");
-    document.body.style.overflow = "hidden";
-}
-
-// Cerrar carrito
-function closeCart() {
-    cartOverlay.classList.remove("active");
-    document.body.style.overflow = "";
-}
-
-cartToggle.addEventListener("click", openCart);
-cartClear.addEventListener("click", clearCart);
-cartClose.addEventListener("click", closeCart);
-
-cartOverlay.addEventListener("click", function(event) {
-    if (event.target === cartOverlay) {
-        closeCart();
-    }
-});
-
-document.addEventListener("keydown", function(event) {
-    if (event.key === "Escape") {
-        closeCart();
-    }
-});
-
-// Mostrar el contenido guardado
-renderCart();
-
-// =========================
-// FINALIZAR PEDIDO POR WHATSAPP
-// CON VALIDACIÓN DE STOCK
-// =========================
-
-cartCheckout.addEventListener("click", async function() {
-    if (cart.length === 0) {
-        return;
-    }
-
-    cartCheckout.disabled = true;
-    cartCheckout.textContent = "VERIFICANDO STOCK...";
-
-    try {
-        // CONSULTAR LOS PRODUCTOS ACTUALES EN SUPABASE
-
-        const productIds = cart.map((item) => item.id);
-
-        const { data: products, error } = await supabase
-            .from("Productos")
-            .select("id, name, price, stock, is_published")
-            .in("id", productIds);
-
-        if (error) {
-            throw error;
-        }
-
-        // COMPROBAR DISPONIBILIDAD
-
-        const unavailable = [];
-
-        cart.forEach((item) => {
-            const currentProduct = products.find(
-                (product) => product.id === item.id
-            );
-
-            if (
-                !currentProduct ||
-                !currentProduct.is_published ||
-                currentProduct.stock < item.quantity
-            ) {
-                unavailable.push(item.name);
-            }
-
-            if (currentProduct) {
-                item.stock = Number(currentProduct.stock);
-            } else {
-                item.stock = 0;
-            }
-        });
-
-        saveCart();
-        renderCart();
-
-        if (unavailable.length > 0) {
-            alert(
-                "No podemos continuar con el pedido. Revisá la disponibilidad de estos productos:\n\n" +
-                unavailable.join("\n") +
-                "\n\nActualizamos la información del carrito."
-            );
-
-            return;
-        }
-
-        // GENERAR MENSAJE DE WHATSAPP
-
-        let message = "Hola VELORA, quisiera realizar el siguiente pedido:\n\n";
-
-        cart.forEach((item) => {
-            message += `${item.name} x ${item.quantity} - ${formatPrice(item.price * item.quantity)}\n`;
-        });
-
-        const total = cart.reduce((sum, item) => {
-            return sum + item.price * item.quantity;
-        }, 0);
-
-        message += `\nTOTAL: ${formatPrice(total)}`;
-        message += "\n\n¿Podrían confirmarme la disponibilidad?";
-
-        window.open(createWhatsAppUrl(message), "_blank");
-
-    } catch (error) {
-        console.error("Error al verificar el stock:", error);
-
-        alert(
-            "No pudimos verificar la disponibilidad de los productos. Intentá nuevamente."
-        );
-
-    } finally {
-        cartCheckout.textContent = "FINALIZAR PEDIDO";
-        cartCheckout.disabled = cart.length === 0;
-    }
-});
